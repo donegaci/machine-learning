@@ -13,8 +13,15 @@ def read_csv(filename):
     return X, y
 
 
-X, y = read_csv("week1.csv")
+def normalise(values):
+    mean = values.mean()
+    sigma = values.max() - values.min()
+    norm = (values - mean) / sigma
+    return norm
 
-reg = LinearRegression().fit(X, y)
+X, y = read_csv("week1.csv")
+X_norm = normalise(X)
+
+reg = LinearRegression().fit(X_norm, y)
 print("y-intercept", reg.intercept_)
 print("slope = ", reg.coef_)

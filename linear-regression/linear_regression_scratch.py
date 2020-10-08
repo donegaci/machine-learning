@@ -77,3 +77,21 @@ plt.xlabel("Itteration")
 plt.ylabel("Cost $J(\Theta)$")
 plt.grid()
 plt.savefig("cost_function.png")
+
+
+# Compare with cost function of baseline model that always predicts 
+# a constant value
+
+m = len(X) # number of features
+h = -2500  # always predict a constant value
+cost = (1/2*m) * ((h - y)**2).sum()
+print("cost for constant model", cost)
+
+plt.figure(3)
+plt.plot(X, y)
+plt.axhline(y=h, color='r')
+plt.legend(["data", "constant model  Y=-2500"])
+plt.title("Constant model fit")
+plt.xlabel("X")
+plt.ylabel("Y")
+plt.savefig("constant_model.png")
