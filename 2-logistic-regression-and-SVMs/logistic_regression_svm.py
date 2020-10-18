@@ -17,6 +17,8 @@ def read_csv(filename):
 def visualise_data(X, y):
     pos_classes = X[y == 1]
     neg_classes = X[y == -1]
+    print("# true_pos ", len(pos_classes))
+    print("# true_neg ", len(neg_classes))
     plt.figure(1)
     plt.scatter(pos_classes[:,0], pos_classes[:,1], marker="+")
     plt.scatter(neg_classes[:,0], neg_classes[:,1], marker="o")
@@ -103,8 +105,45 @@ def linear_svm(X, y):
         plt.savefig("svm_train_and_predicted_c_" + str(C) + ".png")
 
 
+def logistic_classifier_with_squares(X, y):
+    # Train a logistic classifier on data
+    clf = LogisticRegression(random_state=0)
+    clf.fit(X, y)
+    print("classes = ", clf.classes_)
+    print("intercept = ", clf.intercept_)
+    print("coefficients = ", clf.coef_)
 
-    
+    # Use classifier to predict targets on training data
+    preds = clf.predict(X)
+    pred_pos = X[preds==1]
+    pred_neg = X[preds==-1]
+    num_correct = np.sum(preds == y)
+    print("num_correct", num_correct)
+    print("# pred_pos ", len(pred_pos))
+    print("# pred_neg ", len(pred_neg))
+
+    # Retrieve the model parameters.
+    bias = clf.intercept_[0]
+    w1, w2, w3, w4 = clf.coef_.T
+
+    # Plot predictions along with decision boundary
+    decision_bnd = - (bias + w1*X[:,0] + w3 * (X[:,0] **2))  / (w2 + w4 * X[:,1] )
+    plt.figure()
+    plt.scatter(X[:,0], decision_bnd, marker=".")
+    # Plot training data
+    pos_classes = X[y == 1]
+    neg_classes = X[y == -1]
+    # plt.figure()
+    plt.scatter(pos_classes[:,0], pos_classes[:,1], marker="+")
+    plt.scatter(neg_classes[:,0], neg_classes[:,1], marker="o")
+    # plot predictions
+    plt.scatter(pred_pos[:,0], pred_pos[:,1], marker="+")
+    plt.scatter(pred_neg[:,0], pred_neg[:,1], marker="o")
+    plt.xlabel("$X_1$")
+    plt.ylabel("$X_2$")
+    plt.title("Logistic Regression (with squared features) predictions")
+    plt.legend(["Decision boundary", "+ class", "- class", "Predicted +", "Predicted -"])
+    plt.savefig("logistic_squares_train_predicted.png")
 
 
 if __name__ == "__main__":
@@ -116,3 +155,8 @@ if __name__ == "__main__":
     logistic_classifier(X,y)
 
     linear_svm(X, y)
+
+    # add square features
+    squares = X * X
+    X_new = np.hstack((X, squares))
+    logistic_classifier_with_squares(X_new, y)
