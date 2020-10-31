@@ -5,8 +5,9 @@ import matplotlib.pyplot as plt
 from sklearn.preprocessing import PolynomialFeatures
 from sklearn import linear_model
 from sklearn.model_selection import KFold, train_test_split
-from sklearn.metrics import mean_squared_error, confusion_matrix, classification_report
+from sklearn.metrics import mean_squared_error, confusion_matrix, classification_report, roc_curve
 from sklearn.neighbors import KNeighborsClassifier
+from sklearn.dummy import DummyClassifier
 
 
 def read_csv(filename):
@@ -34,6 +35,7 @@ def train_logistic_with_l2(X, y, C):
     # print("Coefficients\n", clf.coef_)
     # print("Intercept\n", clf.intercept_)
     return clf
+
 
 def train_knn_model(X, y, k):
     clf = KNeighborsClassifier(n_neighbors=k)
@@ -106,7 +108,7 @@ def full_pipeline(filename, out_dir):
 
 
     # Use cross validation to select C regularisatoin in logistic regression
-    c_vals = [1, 2, 4, 10, 12.5, 15, 20]
+    c_vals = [0.01, 0.1, 1, 10]
     mse_list = []
     std_list = []
     for c in c_vals:
@@ -172,18 +174,44 @@ def full_pipeline(filename, out_dir):
     plt.savefig(out_dir + "/knn_mse_vs_k.png")
     
 
-    # best logisitc model is N=2 and C=12.5
-    poly = PolynomialFeatures(2)
+    # best logisitc model
+    poly = PolynomialFeatures(1)
     X_poly = poly.fit_transform(X_train)
-    model = train_logistic_with_l2(X_poly, y_train, C=12.5)
+    model = train_logistic_with_l2(X_poly, y_train, C=0.1)
     # evaluate on test set
     X_test_poly = poly.fit_transform(X_test)
     y_pred = model.predict(X_test_poly)
+    log_fpr, log_tpr, _ = roc_curve(y_test, y_pred)
     print("Best Logistic Model")
     print(confusion_matrix(y_test, y_pred))
     print(classification_report(y_test, y_pred))
 
-    # best knn model is with k = 1
+    # best knn model
+    model = train_knn_model(X_train, y_train, k=3)
+    y_pred = model.predict(X_test)
+    knn_fpr, knn_tpr, _ = roc_curve(y_test, y_pred)
+    print("Best Knn Model")
+    print(confusion_matrix(y_test, y_pred))
+    print(classification_report(y_test, y_pred))
+
+    # Dummy classifier 
+    dummy = DummyClassifier(strategy="most_frequent").fit(X_train, y_train)
+    y_dummy = dummy.predict(X_test)
+    dummy_fpr, dummy_tpr, _ = roc_curve(y_test, y_dummy)
+    print("Dummy Model")
+    print(confusion_matrix(y_test, y_dummy))
+    print(classification_report(y_test, y_dummy))
+
+    # plot ROC curve
+    plt.figure()
+    plt.plot(log_fpr, log_tpr, label="logistic model")
+    plt.plot(knn_fpr, knn_tpr, label="knn model")
+    plt.plot(dummy_fpr, dummy_tpr, label="dummy model")
+    plt.plot([0, 1], [0, 1], color='k',linestyle='--')
+    plt.xlabel("False positive rate")
+    plt.ylabel("True positive rate")
+    plt.legend()
+    plt.savefig(out_dir + "/ROC.png")
 
 
 if __name__ == "__main__":
@@ -198,4 +226,5 @@ if __name__ == "__main__":
         os.makedirs(out_path_2)
 
     full_pipeline("week4-b.csv", out_path_2 )
+    full_pipeline("week4-a.csv", out_path_1 )
 
